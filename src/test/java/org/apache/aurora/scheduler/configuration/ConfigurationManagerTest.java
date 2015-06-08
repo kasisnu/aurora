@@ -25,6 +25,10 @@ import org.apache.aurora.gen.Container;
 import org.apache.aurora.gen.CronCollisionPolicy;
 import org.apache.aurora.gen.DockerImage;
 import org.apache.aurora.gen.DockerParameter;
+import org.apache.aurora.gen.DockerContainer;
+import org.apache.aurora.gen.DockerNetworkingMode;
+import org.apache.aurora.gen.DockerParameter;
+import org.apache.aurora.gen.DockerPortMapping;
 import org.apache.aurora.gen.ExecutorConfig;
 import org.apache.aurora.gen.Identity;
 import org.apache.aurora.gen.Image;
@@ -166,8 +170,16 @@ public class ConfigurationManagerTest {
   }
 
   @Test
+  public void testBadContainerConfigNetworkingMode() throws TaskDescriptionException {
+    TaskConfig taskConfig = CONFIG_WITH_CONTAINER.newBuilder();
+    taskConfig.getContainer().getDocker().setNetworkingMode(null);
+
+    configurationManager.validateAndPopulate(ITaskConfig.build(taskConfig));
+  }
+
+  @Test
   public void testInvalidTier() throws TaskDescriptionException {
-    ITaskConfig config = ITaskConfig.build(UNSANITIZED_JOB_CONFIGURATION.deepCopy().getTaskConfig()
+    ITaskConfig config = ITaskConfig.build(UNSANITIZED_JOB_CONFIGURATION.getTaskConfig()
         .setTier("pr/d"));
 
     expectTaskDescriptionException("Tier contains illegal characters");

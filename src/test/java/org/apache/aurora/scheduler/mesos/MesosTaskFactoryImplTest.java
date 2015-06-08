@@ -25,7 +25,11 @@ import org.apache.aurora.common.testing.easymock.EasyMockTest;
 import org.apache.aurora.gen.AssignedTask;
 import org.apache.aurora.gen.Container;
 import org.apache.aurora.gen.DockerContainer;
+import org.apache.aurora.gen.DockerNetworkingMode;
 import org.apache.aurora.gen.DockerParameter;
+import org.apache.aurora.gen.DockerPortMapping;
+import org.apache.aurora.gen.Identity;
+import org.apache.aurora.gen.JobKey;
 import org.apache.aurora.gen.MesosContainer;
 import org.apache.aurora.gen.ServerInfo;
 import org.apache.aurora.gen.TaskConfig;
@@ -44,6 +48,8 @@ import org.apache.aurora.scheduler.storage.entities.ITaskConfig;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.ContainerInfo;
 import org.apache.mesos.Protos.ContainerInfo.DockerInfo;
+import org.apache.mesos.Protos.ContainerInfo.DockerInfo.Network;
+import org.apache.mesos.Protos.ContainerInfo.DockerInfo.PortMapping;
 import org.apache.mesos.Protos.ContainerInfo.Type;
 import org.apache.mesos.Protos.ExecutorInfo;
 import org.apache.mesos.Protos.Offer;
@@ -86,13 +92,20 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
       .setTask(
           new TaskConfig(TASK.getTask().newBuilder())
               .setContainer(Container.docker(
-                  new DockerContainer("testimage")))));
+                  new DockerContainer("testimage", DockerNetworkingMode.HOST)
+                    .setPrivileged(false)
+                    .setForcePullImage(false)))));
   private static final IAssignedTask TASK_WITH_DOCKER_PARAMS = IAssignedTask.build(TASK.newBuilder()
       .setTask(
           new TaskConfig(TASK.getTask().newBuilder())
               .setContainer(Container.docker(
-                  new DockerContainer("testimage").setParameters(
-                      ImmutableList.of(new DockerParameter("label", "testparameter")))))));
+                  new DockerContainer("testimage", DockerNetworkingMode.HOST)
+                  .setPrivileged(false)
+                  .setForcePullImage(false)
+                  .setParameters(
+                      ImmutableList.of(new DockerParameter("label", "testparameter")))
+                  .setPortMappings(
+                      ImmutableList.of(new DockerPortMapping(8080, 80)))))));
 
   private static final SlaveID SLAVE = SlaveID.newBuilder().setValue("slave-id").build();
   private static final Offer OFFER_THERMOS_EXECUTOR = Protos.Offer.newBuilder()
@@ -274,6 +287,8 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
     DockerInfo docker = getDockerTaskInfo().getExecutor().getContainer().getDocker();
     assertEquals("testimage", docker.getImage());
     assertTrue(docker.getParametersList().isEmpty());
+    assertFalse(docker.getForcePullImage());
+    assertFalse(docker.getPrivileged());
   }
 
   @Test
@@ -282,6 +297,48 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
             .getDocker();
     Parameter parameters = Parameter.newBuilder().setKey("label").setValue("testparameter").build();
     assertEquals(ImmutableList.of(parameters), docker.getParametersList());
+  }
+
+  @Test
+  public void testDockerContainerWithNetworkingMode() {
+    DockerInfo docker = getDockerTaskInfo(TASK_WITH_DOCKER_PARAMS).getExecutor().getContainer()
+        .getDocker();
+    assertEquals(Network.HOST, docker.getNetwork());
+  }
+
+  @Test public void testDockerContainerWithPortMappings() {
+    DockerInfo docker = getDockerTaskInfo(TASK_WITH_DOCKER_PARAMS).getExecutor().getContainer()
+        .getDocker();
+    PortMapping mapping = PortMapping.newBuilder().setHostPort(8080).setContainerPort(80)
+        .setProtocol("tcp").build();
+    assertEquals(ImmutableList.of(mapping), docker.getPortMappingsList());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testInvalidExecutorSettings() {
+    control.replay();
+
+    ExecutorSettings.newBuilder()
+        .setExecutorPath(null)
+        .setThermosObserverRoot("")
+        .build();
+  }
+
+  @Test
+  public void testExecutorAndWrapper() {
+    config = ExecutorSettings.newBuilder()
+        .setExecutorPath(EXECUTOR_WRAPPER_PATH)
+        .setExecutorResources(ImmutableList.of(SOME_OVERHEAD_EXECUTOR.getExecutorPath()))
+        .setThermosObserverRoot("/var/run/thermos")
+        .setExecutorOverhead(SOME_OVERHEAD_EXECUTOR.getExecutorOverhead())
+        .build();
+    expect(tierManager.getTier(TASK_CONFIG)).andReturn(DEFAULT).times(2);
+    taskFactory = new MesosTaskFactoryImpl(config, tierManager);
+
+    control.replay();
+
+    TaskInfo taskInfo = taskFactory.createFrom(TASK, SLAVE);
+    assertEquals(EXECUTOR_WITH_WRAPPER, taskInfo.getExecutor());
   }
 
   @Test

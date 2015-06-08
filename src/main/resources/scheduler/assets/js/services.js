@@ -429,6 +429,45 @@
           if (task.container && task.container.docker) {
             container = {};
             container.image = task.container.docker.image;
+            // Disable jshint so we can reference the DockerNetworkingMode object defined
+            // as a global
+            // jshint ignore:start
+            var networkMode = task.container.docker.networkingMode;
+            container.networkingMode = _.keys(DockerNetworkingMode)[networkMode - 1];
+            // jshint ignore:end
+            container.privileged = task.container.docker.privileged;
+            if (container.privileged === null) {
+              container.privileged = false;
+            }
+            container.forcePullImage = task.container.docker.forcePullImage;
+            if (container.forcePullImage === null) {
+              container.forcePullImage = false;
+            }
+            container.parameters = _.chain(task.container.docker.parameters)
+              .sortBy(function (parameter) {
+                return parameter.name;
+              })
+              .map(function (parameter) {
+                return '--' + parameter.name + '=' + parameter.value;
+              })
+              .value()
+              .join('\n');
+            container.portMappings = _.chain(task.container.docker.portMappings)
+              .sortBy(function (portMapping) {
+                return portMapping.hostPort;
+              })
+              .map(function (portMapping) {
+                var mapping = portMapping.hostPort + ':' + portMapping.containerPort;
+                if (portMapping.protocol === null) {
+                  mapping = mapping + '/tcp';
+                }
+                else {
+                  mapping = mapping + '/' + portMapping.protocol;
+                }
+                return mapping;
+              })
+              .value()
+              .join('\n');
           }
 
           return {
