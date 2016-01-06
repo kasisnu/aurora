@@ -83,6 +83,7 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
       TaskTestUtil.makeConfig(TaskTestUtil.JOB)
           .newBuilder()
           .setContainer(Container.mesos(new MesosContainer())));
+  private static final String EXECUTOR_WRAPPER_PATH = "/fake/executor_wrapper.sh";
   private static final IAssignedTask TASK = IAssignedTask.build(new AssignedTask()
       .setInstanceId(2)
       .setTaskId("task-id")
@@ -106,6 +107,14 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
                       ImmutableList.of(new DockerParameter("label", "testparameter")))
                   .setPortMappings(
                       ImmutableList.of(new DockerPortMapping(8080, 80)))))));
+  private static final ExecutorInfo EXECUTOR_WITH_WRAPPER =
+      ExecutorInfo.newBuilder(DEFAULT_EXECUTOR)
+          .setCommand(CommandInfo.newBuilder()
+              .setValue("./executor_wrapper.sh")
+              .addUris(URI.newBuilder().setValue(NO_OVERHEAD_EXECUTOR.getExecutorPath())
+                  .setExecutable(true))
+              .addUris(URI.newBuilder().setValue(EXECUTOR_WRAPPER_PATH).setExecutable(true)))
+          .build();
 
   private static final SlaveID SLAVE = SlaveID.newBuilder().setValue("slave-id").build();
   private static final Offer OFFER_THERMOS_EXECUTOR = Protos.Offer.newBuilder()
