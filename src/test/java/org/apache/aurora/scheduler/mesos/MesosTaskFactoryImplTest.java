@@ -107,14 +107,6 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
                       ImmutableList.of(new DockerParameter("label", "testparameter")))
                   .setPortMappings(
                       ImmutableList.of(new DockerPortMapping(8080, 80)))))));
-  private static final ExecutorInfo EXECUTOR_WITH_WRAPPER =
-      ExecutorInfo.newBuilder(DEFAULT_EXECUTOR)
-          .setCommand(CommandInfo.newBuilder()
-              .setValue("./executor_wrapper.sh")
-              .addUris(URI.newBuilder().setValue(NO_OVERHEAD_EXECUTOR.getExecutorPath())
-                  .setExecutable(true))
-              .addUris(URI.newBuilder().setValue(EXECUTOR_WRAPPER_PATH).setExecutable(true)))
-          .build();
 
   private static final SlaveID SLAVE = SlaveID.newBuilder().setValue("slave-id").build();
   private static final Offer OFFER_THERMOS_EXECUTOR = Protos.Offer.newBuilder()
@@ -321,33 +313,6 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
     PortMapping mapping = PortMapping.newBuilder().setHostPort(8080).setContainerPort(80)
         .setProtocol("tcp").build();
     assertEquals(ImmutableList.of(mapping), docker.getPortMappingsList());
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void testInvalidExecutorSettings() {
-    control.replay();
-
-    ExecutorSettings.newBuilder()
-        .setExecutorPath(null)
-        .setThermosObserverRoot("")
-        .build();
-  }
-
-  @Test
-  public void testExecutorAndWrapper() {
-    config = ExecutorSettings.newBuilder()
-        .setExecutorPath(EXECUTOR_WRAPPER_PATH)
-        .setExecutorResources(ImmutableList.of(SOME_OVERHEAD_EXECUTOR.getExecutorPath()))
-        .setThermosObserverRoot("/var/run/thermos")
-        .setExecutorOverhead(SOME_OVERHEAD_EXECUTOR.getExecutorOverhead())
-        .build();
-    expect(tierManager.getTier(TASK_CONFIG)).andReturn(DEFAULT).times(2);
-    taskFactory = new MesosTaskFactoryImpl(config, tierManager);
-
-    control.replay();
-
-    TaskInfo taskInfo = taskFactory.createFrom(TASK, SLAVE);
-    assertEquals(EXECUTOR_WITH_WRAPPER, taskInfo.getExecutor());
   }
 
   @Test
