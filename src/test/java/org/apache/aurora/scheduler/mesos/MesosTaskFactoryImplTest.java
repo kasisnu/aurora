@@ -28,8 +28,6 @@ import org.apache.aurora.gen.DockerContainer;
 import org.apache.aurora.gen.DockerNetworkingMode;
 import org.apache.aurora.gen.DockerParameter;
 import org.apache.aurora.gen.DockerPortMapping;
-import org.apache.aurora.gen.Identity;
-import org.apache.aurora.gen.JobKey;
 import org.apache.aurora.gen.MesosContainer;
 import org.apache.aurora.gen.ServerInfo;
 import org.apache.aurora.gen.TaskConfig;
@@ -83,7 +81,6 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
       TaskTestUtil.makeConfig(TaskTestUtil.JOB)
           .newBuilder()
           .setContainer(Container.mesos(new MesosContainer())));
-  private static final String EXECUTOR_WRAPPER_PATH = "/fake/executor_wrapper.sh";
   private static final IAssignedTask TASK = IAssignedTask.build(new AssignedTask()
       .setInstanceId(2)
       .setTaskId("task-id")
