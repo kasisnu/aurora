@@ -235,7 +235,9 @@ public interface MesosTaskFactory {
           .addAllPortMappings(portMappings)
           .setForcePullImage(config.isForcePullImage())
           .setNetwork(dockerNetwork)
-          .setPrivileged(config.isPrivileged())
+          .setPrivileged(config.isPrivileged());
+
+      return ContainerInfo.newBuilder()
           .setType(ContainerInfo.Type.DOCKER)
           .setDocker(dockerBuilder.build())
           .addAllVolumes(executorSettings.getExecutorConfig().getVolumeMounts())
