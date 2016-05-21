@@ -28,7 +28,9 @@ import org.apache.aurora.gen.AssignedTask;
 import org.apache.aurora.gen.Container;
 import org.apache.aurora.gen.DockerContainer;
 import org.apache.aurora.gen.DockerImage;
+import org.apache.aurora.gen.DockerNetworkingMode;
 import org.apache.aurora.gen.DockerParameter;
+import org.apache.aurora.gen.DockerPortMapping;
 import org.apache.aurora.gen.Image;
 import org.apache.aurora.gen.MesosContainer;
 import org.apache.aurora.gen.ServerInfo;
@@ -47,6 +49,8 @@ import org.apache.aurora.scheduler.storage.entities.ITaskConfig;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.ContainerInfo;
 import org.apache.mesos.Protos.ContainerInfo.DockerInfo;
+import org.apache.mesos.Protos.ContainerInfo.DockerInfo.Network;
+import org.apache.mesos.Protos.ContainerInfo.DockerInfo.PortMapping;
 import org.apache.mesos.Protos.ContainerInfo.MesosInfo;
 import org.apache.mesos.Protos.ContainerInfo.Type;
 import org.apache.mesos.Protos.ExecutorInfo;
@@ -94,13 +98,21 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
       .setTask(
           new TaskConfig(TASK.getTask().newBuilder())
               .setContainer(Container.docker(
-                  new DockerContainer("testimage")))));
+                  new DockerContainer("testimage", DockerNetworkingMode.HOST)
+                  .setPrivileged(false)
+                  .setForcePullImage(false)))));
+
   private static final IAssignedTask TASK_WITH_DOCKER_PARAMS = IAssignedTask.build(TASK.newBuilder()
       .setTask(
           new TaskConfig(TASK.getTask().newBuilder())
               .setContainer(Container.docker(
-                  new DockerContainer("testimage").setParameters(
-                      ImmutableList.of(new DockerParameter("label", "testparameter")))))));
+                  new DockerContainer("testimage", DockerNetworkingMode.HOST)
+                  .setPrivileged(false)
+                  .setForcePullImage(false)
+                  .setParameters(
+                      ImmutableList.of(new DockerParameter("label", "testparameter")))
+                  .setPortMappings(
+                      ImmutableList.of(new DockerPortMapping(8080, 80)))))));
 
   private static final ExecutorSettings EXECUTOR_SETTINGS_WITH_VOLUMES = new ExecutorSettings(
       new ExecutorConfig(
@@ -308,6 +320,8 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
     DockerInfo docker = getDockerTaskInfo().getExecutor().getContainer().getDocker();
     assertEquals("testimage", docker.getImage());
     assertTrue(docker.getParametersList().isEmpty());
+    assertFalse(docker.getForcePullImage());
+    assertFalse(docker.getPrivileged());
   }
 
   @Test
@@ -324,13 +338,28 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
 
     expect(tierManager.getTier(TASK_WITH_DOCKER.getTask())).andReturn(DEV_TIER);
     taskFactory = new MesosTaskFactoryImpl(config, tierManager, SERVER_INFO);
-
     control.replay();
 
     TaskInfo taskInfo = taskFactory.createFrom(TASK_WITH_DOCKER, OFFER_THERMOS_EXECUTOR);
     assertEquals(
-        config.getExecutorConfig().getVolumeMounts(),
-        taskInfo.getExecutor().getContainer().getVolumesList());
+            config.getExecutorConfig().getVolumeMounts(),
+            taskInfo.getExecutor().getContainer().getVolumesList());
+  }
+
+  @Test
+  public void testDockerContainerWithNetworkingMode() {
+    DockerInfo docker = getDockerTaskInfo(TASK_WITH_DOCKER_PARAMS).getExecutor().getContainer()
+        .getDocker();
+    assertEquals(Network.HOST, docker.getNetwork());
+  }
+
+  @Test
+  public void testDockerContainerWithPortMappings() {
+    DockerInfo docker = getDockerTaskInfo(TASK_WITH_DOCKER_PARAMS).getExecutor().getContainer()
+        .getDocker();
+    PortMapping mapping = PortMapping.newBuilder().setHostPort(8080).setContainerPort(80)
+        .setProtocol("tcp").build();
+    assertEquals(ImmutableList.of(mapping), docker.getPortMappingsList());
   }
 
   @Test
@@ -368,7 +397,10 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
     ContainerInfo expectedContainer = ContainerInfo.newBuilder()
         .setType(Type.DOCKER)
         .setDocker(DockerInfo.newBuilder()
-            .setImage("hello-world"))
+            .setImage("hello-world")
+            .setNetwork(Network.HOST)
+            .setPrivileged(false)
+            .setForcePullImage(false))
         .build();
     assertEquals(expectedContainer, task.getContainer());
     checkDiscoveryInfoUnset(task);

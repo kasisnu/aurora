@@ -32,6 +32,7 @@ import org.apache.aurora.gen.AuroraAdmin;
 import org.apache.aurora.gen.Container;
 import org.apache.aurora.gen.Container._Fields;
 import org.apache.aurora.gen.DockerContainer;
+import org.apache.aurora.gen.DockerNetworkingMode;
 import org.apache.aurora.gen.DockerParameter;
 import org.apache.aurora.gen.JobConfiguration;
 import org.apache.aurora.gen.ScheduleStatus;
@@ -166,6 +167,10 @@ public class ThriftIT extends EasyMockTest {
     task.setProduction(false)
         .setContainer(Container.docker(new DockerContainer()
             .setImage("image")
+            .setNetworkingMode(DockerNetworkingMode.HOST)
+            .setPrivileged(false)
+            .setForcePullImage(false)
+            .setPortMappings(ImmutableList.of())
             .setParameters(
                 ImmutableList.of(new DockerParameter("a", "b"), new DockerParameter("c", "d")))));
     JobConfiguration job = new JobConfiguration()

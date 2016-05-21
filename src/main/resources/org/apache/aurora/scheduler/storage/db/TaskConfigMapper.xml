@@ -85,6 +85,13 @@
     <id column="id"/>
   </resultMap>
 
+  <resultMap id="dockerPortMappingMap" type="org.apache.aurora.gen.DockerPortMapping">
+    <id column="id"/>
+    <result column="host_port" property="hostPort"/>
+    <result column="container_port" property="containerPort"/>
+    <result column="protocol" property="protocol"/>
+  </resultMap>
+
   <select id="selectDockerParameters" resultMap="dockerParameterMap">
     SELECT
       id,
@@ -94,12 +101,33 @@
     WHERE container_id = #{id}
   </select>
 
+  <select id="selectDockerPortMappings" resultMap="dockerPortMappingMap">
+    SELECT
+      id,
+      host_port,
+      container_port,
+      protocol
+    FROM task_config_docker_container_port_mappings
+    WHERE container_id = #{id}
+  </select>
+
   <resultMap id="dockerContainerMap" type="org.apache.aurora.gen.DockerContainer">
     <id column="id"/>
     <result column="docker_image" property="image"/>
+    <result
+        column="networking_mode"
+        property="networkingMode"
+        typeHandler="org.apache.aurora.scheduler.storage.db.typehandlers.DockerNetworkingModeTypeHandler"/>
+    <result column="privileged" property="privileged"/>
+    <result column="force_pull_image" property="forcePullImage"/>
     <collection
         property="parameters"
         select="selectDockerParameters"
+        column="id"
+        foreignColumn="container_id"/>
+    <collection
+        property="portMappings"
+        select="selectDockerPortMappings"
         column="id"
         foreignColumn="container_id"/>
   </resultMap>
@@ -185,6 +213,9 @@
       p.port_name AS p_port_name,
       d.id AS c_id,
       d.image AS c_docker_image,
+      COALESCE(d.networking_mode, 0) AS c_networking_mode,
+      d.privileged AS c_privileged,
+      d.force_pull_image AS c_force_pull_image,
       m.id AS m_id,
       m.key AS m_key,
       m.value AS m_value,
@@ -334,10 +365,16 @@
   <insert id="insertContainer" useGeneratedKeys="true" keyColumn="id" keyProperty="result.id">
     INSERT INTO task_config_docker_containers (
       task_config_id,
-      image
+      image,
+      networking_mode,
+      privileged,
+      force_pull_image
     ) VALUES (
       #{configId},
-      #{container.image}
+      #{container.image},
+      #{container.networkingMode, typeHandler=org.apache.aurora.scheduler.storage.db.typehandlers.DockerNetworkingModeTypeHandler},
+      #{container.privileged},
+      #{container.forcePullImage}
     )
   </insert>
 
@@ -364,6 +401,22 @@
       #{configId},
       #{name},
       #{tag}
+    )
+  </insert>
+
+  <insert id="insertDockerPortMappings">
+    INSERT INTO task_config_docker_container_port_mappings (
+      container_id,
+      host_port,
+      container_port,
+      protocol
+    ) VALUES (
+    <foreach item="portMapping" collection="portMappings" separator="),(">
+      #{containerId},
+      #{portMapping.hostPort},
+      #{portMapping.containerPort},
+      #{portMapping.protocol}
+    </foreach>
     )
   </insert>
 

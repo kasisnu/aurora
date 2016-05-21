@@ -111,16 +111,24 @@ class MesosTaskInstance(Struct):
   health_check_config = Default(HealthCheckConfig, HealthCheckConfig())
   lifecycle           = LifecycleConfig
 
-
 class Parameter(Struct):
   name = Required(String)
   value = Required(String)
 
+DockerParameter = Parameter
+
+class DockerPortMapping(Struct):
+  host_port      = Required(Integer)
+  container_port = Required(Integer)
+  protocol       = Default(String, "tcp")
 
 class Docker(Struct):
   image = Required(String)
-  parameters = Default(List(Parameter), [])
-
+  parameters = Default(List(DockerParameter), [])
+  networking_mode  = Default(String, "HOST")
+  port_mappings    = Default(List(DockerPortMapping), [])
+  privileged       = Default(Boolean, False)
+  force_pull_image = Default(Boolean, False)
 
 class AppcImage(Struct):
   name = Required(String)

@@ -142,6 +142,7 @@ public class ConfigurationManagerTest {
   @Test
   public void testBadContainerConfig() throws TaskDescriptionException {
     TaskConfig taskConfig = CONFIG_WITH_CONTAINER.newBuilder();
+
     taskConfig.getContainer().getDocker().setImage(null);
 
     expectTaskDescriptionException("A container must specify an image");

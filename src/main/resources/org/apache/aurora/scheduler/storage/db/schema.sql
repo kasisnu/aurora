@@ -181,10 +181,20 @@ CREATE TABLE task_config_metadata(
   value VARCHAR NOT NULL
 );
 
+CREATE TABLE networking_modes(
+  id INT PRIMARY KEY,
+  name VARCHAR NOT NULL,
+
+  UNIQUE(name)
+);
+
 CREATE TABLE task_config_docker_containers(
   id IDENTITY,
   task_config_id BIGINT NOT NULL REFERENCES task_configs(id) ON DELETE CASCADE,
   image VARCHAR NOT NULL,
+  networking_mode INT NOT NULL REFERENCES networking_modes(id),
+  privileged BOOLEAN NOT NULL,
+  force_pull_image BOOLEAN NOT NULL,
 
   UNIQUE(task_config_id)
 );
@@ -212,6 +222,14 @@ CREATE TABLE task_config_appc_images(
   image_id VARCHAR NOT NULL,
 
   UNIQUE(task_config_id)
+);
+
+CREATE TABLE task_config_docker_container_port_mappings(
+  id IDENTITY,
+  container_id BIGINT NOT NULL REFERENCES task_config_docker_containers(id) ON DELETE CASCADE,
+  host_port INT NOT NULL,
+  container_port INT NOT NULL,
+  protocol VARCHAR NOT NULL
 );
 
 CREATE TABLE task_states(

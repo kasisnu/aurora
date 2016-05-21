@@ -245,8 +245,24 @@ public interface MesosTaskFactory {
           item -> Protos.Parameter.newBuilder().setKey(item.getName())
             .setValue(item.getValue()).build());
 
+      Iterable<Protos.ContainerInfo.DockerInfo.PortMapping> portMappings = Iterables.transform(
+          config.getPortMappings(),
+          item -> Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder()
+                            .setHostPort(item.getHostPort())
+                            .setContainerPort(item.getContainerPort())
+                            .setProtocol(item.getProtocol()).build());
+
+      ContainerInfo.DockerInfo.Network dockerNetwork = ContainerInfo.DockerInfo.Network.valueOf(
+              config.getNetworkingMode().getValue());
+
       ContainerInfo.DockerInfo.Builder dockerBuilder = ContainerInfo.DockerInfo.newBuilder()
-          .setImage(config.getImage()).addAllParameters(parameters);
+          .setImage(config.getImage())
+          .addAllParameters(parameters)
+          .addAllPortMappings(portMappings)
+          .setForcePullImage(config.isForcePullImage())
+          .setNetwork(dockerNetwork)
+          .setPrivileged(config.isPrivileged());
+
       return ContainerInfo.newBuilder()
           .setType(ContainerInfo.Type.DOCKER)
           .setDocker(dockerBuilder.build())

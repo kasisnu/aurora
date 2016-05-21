@@ -38,7 +38,9 @@ from gen.apache.aurora.api.ttypes import (
     CronCollisionPolicy,
     DockerContainer,
     DockerImage,
+    DockerNetworkingMode,
     DockerParameter,
+    DockerPortMapping,
     ExecutorConfig,
     Identity,
     Image,
@@ -144,7 +146,21 @@ def create_docker_container(container):
   if container.parameters() is not Empty:
     for p in fully_interpolated(container.parameters()):
       params.append(DockerParameter(p['name'], p['value']))
-  return DockerContainer(fully_interpolated(container.image()), params)
+
+  networking_mode = parse_enum(DockerNetworkingMode, container.networking_mode())
+
+  mappings = list()
+  if container.port_mappings() is not Empty:
+    for m in fully_interpolated(container.port_mappings()):
+      mappings.append(DockerPortMapping(m['host_port'], m['container_port'],
+                                        m['protocol']))
+
+  return DockerContainer(fully_interpolated(container.image()),
+          networking_mode,
+          mappings,
+          fully_interpolated(container.privileged()),
+          params,
+          fully_interpolated(container.force_pull_image()))
 
 
 def create_container_config(container):

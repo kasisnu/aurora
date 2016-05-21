@@ -25,7 +25,9 @@ import org.apache.aurora.gen.Constraint;
 import org.apache.aurora.gen.Container;
 import org.apache.aurora.gen.Container._Fields;
 import org.apache.aurora.gen.DockerContainer;
+import org.apache.aurora.gen.DockerNetworkingMode;
 import org.apache.aurora.gen.DockerParameter;
+import org.apache.aurora.gen.DockerPortMapping;
 import org.apache.aurora.gen.ExecutorConfig;
 import org.apache.aurora.gen.Identity;
 import org.apache.aurora.gen.LimitConstraint;
@@ -110,7 +112,7 @@ public final class TaskTestUtil {
             new Constraint(
                 "valueConstraint",
                 TaskConstraint.value(
-                    new ValueConstraint(true, ImmutableSet.of("value1", "value2")))),
+                    new ValueConstraint(true, ImmutableSet.of("value2", "value1")))),
             new Constraint(
                 "limitConstraint",
                 TaskConstraint.limit(new LimitConstraint(5)))))
@@ -120,10 +122,17 @@ public final class TaskTestUtil {
         .setMetadata(ImmutableSet.of(new Metadata("key", "value")))
         .setExecutorConfig(new ExecutorConfig("name", "config"))
         .setContainer(Container.docker(
-            new DockerContainer("imagename")
+            new DockerContainer()
+                .setImage("imagename")
                 .setParameters(ImmutableList.of(
                     new DockerParameter("a", "b"),
-                    new DockerParameter("c", "d")))))
+                    new DockerParameter("c", "d")))
+                .setNetworkingMode(DockerNetworkingMode.BRIDGE)
+                .setPrivileged(true)
+                .setForcePullImage(true)
+                .setPortMappings(ImmutableList.of(
+                        new DockerPortMapping(8080, 80).setProtocol("tcp"),
+                        new DockerPortMapping(8443, 443)))))
         .setResources(ImmutableSet.of(
             Resource.numCpus(1.0),
             Resource.ramMb(1024),

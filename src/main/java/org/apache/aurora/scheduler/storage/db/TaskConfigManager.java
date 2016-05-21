@@ -121,6 +121,9 @@ class TaskConfigManager {
       if (!container.getParameters().isEmpty()) {
         configMapper.insertDockerParameters(containerInsert.getId(), container.getParameters());
       }
+      if (!container.getPortMappings().isEmpty()) {
+        configMapper.insertDockerPortMappings(containerInsert.getId(), container.getPortMappings());
+      }
     } else if (config.getContainer().isSetMesos()
         && config.getContainer().getMesos().isSetImage()) {
 

@@ -20,13 +20,13 @@ import pytest
 from apache.aurora.config import AuroraConfig
 from apache.aurora.config.schema.base import (
     AppcImage,
-    Container,
     Docker,
     DockerImage,
+    DockerParameter,
+    DockerPortMapping,
     HealthCheckConfig,
     Job,
     Mesos,
-    Parameter,
     SimpleTask
 )
 from apache.aurora.config.thrift import convert as convert_pystachio_to_thrift
@@ -108,14 +108,44 @@ def test_config_with_appc_image():
   assert job.taskConfig.container.mesos.image.appc.imageId == image_id
 
 
-def test_docker_with_parameters():
+def test_docker_with_no_parameters():
   helloworld = HELLO_WORLD(
-    container=Container(
-      docker=Docker(image='test_image', parameters=[Parameter(name='foo', value='bar')])
-    )
+    container=Docker(image='test_image')
   )
   job = convert_pystachio_to_thrift(helloworld)
   assert job.taskConfig.container.docker.image == 'test_image'
+  assert job.taskConfig.container.docker.networkingMode == 1
+  assert job.taskConfig.container.docker.portMappings == []
+  assert job.taskConfig.container.docker.privileged is False
+  assert job.taskConfig.container.docker.parameters == []
+  assert job.taskConfig.container.docker.forcePullImage is False
+
+
+def test_docker_config_with_options():
+  hello_with_options = HELLO_WORLD(
+     container=Docker(image='test_image',
+         networking_mode='BRIDGE',
+         force_pull_image=True,
+         privileged=True,
+         port_mappings=[DockerPortMapping(host_port=8080,
+                                          container_port=80,
+                                          protocol='tcp')],
+         parameters=[DockerParameter(name='foo', value='bar')])
+  )
+  job = convert_pystachio_to_thrift(hello_with_options)
+  assert job.taskConfig.container.docker.image == 'test_image'
+  assert job.taskConfig.container.docker.networkingMode == 2
+  assert job.taskConfig.container.docker.privileged is True
+  assert job.taskConfig.container.docker.forcePullImage is True
+
+  assert len(job.taskConfig.container.docker.portMappings) == 1
+  assert job.taskConfig.container.docker.portMappings[0].hostPort == 8080
+  assert job.taskConfig.container.docker.portMappings[0].containerPort == 80
+  assert job.taskConfig.container.docker.portMappings[0].protocol == 'tcp'
+
+  assert len(job.taskConfig.container.docker.parameters) == 1
+  assert job.taskConfig.container.docker.parameters[0].name == 'foo'
+  assert job.taskConfig.container.docker.parameters[0].value == 'bar'
 
 
 def test_config_with_options():
