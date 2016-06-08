@@ -292,8 +292,7 @@ containers, you may use the following flags:
 `-allow_docker_parameters` controls whether or not users may pass their own configuration parameters
 through the job configuration files. If set to `false` (the default), the scheduler will reject
 jobs with custom parameters. *NOTE*: this setting should be used with caution as it allows any job
-owner to specify any parameters they wish, including those that may introduce security concerns
-(`privileged=true`, for example).
+owner to specify any parameters they wish, including those that may introduce security concerns.
 
 `-default_docker_parameters` allows a cluster operator to specify a universal set of parameters that
 should be used for every container that does not have parameters explicitly configured at the job

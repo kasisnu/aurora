@@ -168,7 +168,6 @@ public class ThriftIT extends EasyMockTest {
         .setContainer(Container.docker(new DockerContainer()
             .setImage("image")
             .setNetworkingMode(DockerNetworkingMode.HOST)
-            .setPrivileged(false)
             .setForcePullImage(false)
             .setPortMappings(ImmutableList.of())
             .setParameters(

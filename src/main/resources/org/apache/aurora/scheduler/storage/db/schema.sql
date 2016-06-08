@@ -193,7 +193,6 @@ CREATE TABLE task_config_docker_containers(
   task_config_id BIGINT NOT NULL REFERENCES task_configs(id) ON DELETE CASCADE,
   image VARCHAR NOT NULL,
   networking_mode INT NOT NULL REFERENCES networking_modes(id),
-  privileged BOOLEAN NOT NULL,
   force_pull_image BOOLEAN NOT NULL,
 
   UNIQUE(task_config_id)

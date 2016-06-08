@@ -234,13 +234,9 @@ struct DockerContainer {
   3: DockerNetworkingMode networkingMode = DockerNetworkingMode.HOST
   /** Host -> container port mappings */
   4: optional list<DockerPortMapping> portMappings
-  /** Flag to enable privileged mode
-   *  https://docs.docker.com/reference/run/#runtime-privilege-linux-capabilities-and-lxc-configuration
-  */
-  5: optional bool privileged = 0
   /** Arbitrary parameters to pass to the Docker CLI invocation */
   2: optional list<DockerParameter> parameters
-  6: optional bool forcePullImage = 0
+  5: optional bool forcePullImage = 0
 }
 
 /** Describes a container to be used in a task */

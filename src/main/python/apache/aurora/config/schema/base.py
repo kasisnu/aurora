@@ -127,7 +127,6 @@ class Docker(Struct):
   parameters = Default(List(DockerParameter), [])
   networking_mode  = Default(String, "HOST")
   port_mappings    = Default(List(DockerPortMapping), [])
-  privileged       = Default(Boolean, False)
   force_pull_image = Default(Boolean, False)
 
 class AppcImage(Struct):

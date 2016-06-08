@@ -158,7 +158,6 @@ def create_docker_container(container):
   return DockerContainer(fully_interpolated(container.image()),
           networking_mode,
           mappings,
-          fully_interpolated(container.privileged()),
           params,
           fully_interpolated(container.force_pull_image()))
 

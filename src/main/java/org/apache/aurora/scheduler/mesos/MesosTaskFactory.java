@@ -260,8 +260,7 @@ public interface MesosTaskFactory {
           .addAllParameters(parameters)
           .addAllPortMappings(portMappings)
           .setForcePullImage(config.isForcePullImage())
-          .setNetwork(dockerNetwork)
-          .setPrivileged(config.isPrivileged());
+          .setNetwork(dockerNetwork);
 
       return ContainerInfo.newBuilder()
           .setType(ContainerInfo.Type.DOCKER)

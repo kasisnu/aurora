@@ -116,7 +116,6 @@ def test_docker_with_no_parameters():
   assert job.taskConfig.container.docker.image == 'test_image'
   assert job.taskConfig.container.docker.networkingMode == 1
   assert job.taskConfig.container.docker.portMappings == []
-  assert job.taskConfig.container.docker.privileged is False
   assert job.taskConfig.container.docker.parameters == []
   assert job.taskConfig.container.docker.forcePullImage is False
 
@@ -126,7 +125,6 @@ def test_docker_config_with_options():
      container=Docker(image='test_image',
          networking_mode='BRIDGE',
          force_pull_image=True,
-         privileged=True,
          port_mappings=[DockerPortMapping(host_port=8080,
                                           container_port=80,
                                           protocol='tcp')],
@@ -135,7 +133,6 @@ def test_docker_config_with_options():
   job = convert_pystachio_to_thrift(hello_with_options)
   assert job.taskConfig.container.docker.image == 'test_image'
   assert job.taskConfig.container.docker.networkingMode == 2
-  assert job.taskConfig.container.docker.privileged is True
   assert job.taskConfig.container.docker.forcePullImage is True
 
   assert len(job.taskConfig.container.docker.portMappings) == 1

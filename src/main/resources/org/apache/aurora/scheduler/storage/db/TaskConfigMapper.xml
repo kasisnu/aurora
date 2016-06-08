@@ -118,7 +118,6 @@
         column="networking_mode"
         property="networkingMode"
         typeHandler="org.apache.aurora.scheduler.storage.db.typehandlers.DockerNetworkingModeTypeHandler"/>
-    <result column="privileged" property="privileged"/>
     <result column="force_pull_image" property="forcePullImage"/>
     <collection
         property="parameters"
@@ -214,7 +213,6 @@
       d.id AS c_id,
       d.image AS c_docker_image,
       COALESCE(d.networking_mode, 0) AS c_networking_mode,
-      d.privileged AS c_privileged,
       d.force_pull_image AS c_force_pull_image,
       m.id AS m_id,
       m.key AS m_key,
@@ -367,13 +365,11 @@
       task_config_id,
       image,
       networking_mode,
-      privileged,
       force_pull_image
     ) VALUES (
       #{configId},
       #{container.image},
       #{container.networkingMode, typeHandler=org.apache.aurora.scheduler.storage.db.typehandlers.DockerNetworkingModeTypeHandler},
-      #{container.privileged},
       #{container.forcePullImage}
     )
   </insert>

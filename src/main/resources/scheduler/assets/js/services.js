@@ -435,10 +435,6 @@
             var networkMode = task.container.docker.networkingMode;
             container.networkingMode = _.keys(DockerNetworkingMode)[networkMode - 1];
             // jshint ignore:end
-            container.privileged = task.container.docker.privileged;
-            if (container.privileged === null) {
-              container.privileged = false;
-            }
             container.forcePullImage = task.container.docker.forcePullImage;
             if (container.forcePullImage === null) {
               container.forcePullImage = false;

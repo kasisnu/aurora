@@ -99,7 +99,6 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
           new TaskConfig(TASK.getTask().newBuilder())
               .setContainer(Container.docker(
                   new DockerContainer("testimage", DockerNetworkingMode.HOST)
-                  .setPrivileged(false)
                   .setForcePullImage(false)))));
 
   private static final IAssignedTask TASK_WITH_DOCKER_PARAMS = IAssignedTask.build(TASK.newBuilder()
@@ -107,7 +106,6 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
           new TaskConfig(TASK.getTask().newBuilder())
               .setContainer(Container.docker(
                   new DockerContainer("testimage", DockerNetworkingMode.HOST)
-                  .setPrivileged(false)
                   .setForcePullImage(false)
                   .setParameters(
                       ImmutableList.of(new DockerParameter("label", "testparameter")))
@@ -321,7 +319,6 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
     assertEquals("testimage", docker.getImage());
     assertTrue(docker.getParametersList().isEmpty());
     assertFalse(docker.getForcePullImage());
-    assertFalse(docker.getPrivileged());
   }
 
   @Test
@@ -399,7 +396,6 @@ public class MesosTaskFactoryImplTest extends EasyMockTest {
         .setDocker(DockerInfo.newBuilder()
             .setImage("hello-world")
             .setNetwork(Network.HOST)
-            .setPrivileged(false)
             .setForcePullImage(false))
         .build();
     assertEquals(expectedContainer, task.getContainer());

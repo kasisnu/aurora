@@ -128,7 +128,6 @@ public final class TaskTestUtil {
                     new DockerParameter("a", "b"),
                     new DockerParameter("c", "d")))
                 .setNetworkingMode(DockerNetworkingMode.BRIDGE)
-                .setPrivileged(true)
                 .setForcePullImage(true)
                 .setPortMappings(ImmutableList.of(
                         new DockerPortMapping(8080, 80).setProtocol("tcp"),

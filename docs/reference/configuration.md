@@ -471,7 +471,6 @@ unified-container, the container can be omitted from your job config.
   ```image```              | String                        | The name of the docker image to execute.  If the image does not exist locally it will be pulled with ```docker pull```.
   ```networking_mode       | Enum                          | The networking mode to use to run the container. (HOST, BRIDGED or NONE)
   ```port_mappings         | List(DockerPortMapping)       | List of port mappings exposed by the container.
-  ```privileged```         | Boolean | When True, thi      s runs the Docker container in privileged mode (the --privileged option). (Default: False)
   ```parameters```         | List(DockerParameter)         | Additional parameters to pass to the docker containerizer.
   ```force_pull_image```   | Boolean                       | When True, this forces the Docker daemon to pull the image. (Default: False)
 
